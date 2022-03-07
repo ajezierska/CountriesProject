@@ -1,12 +1,28 @@
-import React from 'react';
-import './App.css';
+import React from "react";
+import "./App.css";
+import CountriesList from "./components/CountriesList";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import CountryDetail from "./components/CountryDetail";
+import { ApolloProvider } from "@apollo/react-hooks";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+
+export const client = new ApolloClient({
+  uri: "https://countries.trevorblades.com",
+  cache: new InMemoryCache(),
+});
 
 function App() {
   return (
-    <div className="App">
-      <div className="container mx-auto">
+    <ApolloProvider client={client}>
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<CountriesList />} />
+            <Route path=":code" element={<CountryDetail />} />
+          </Routes>
+        </BrowserRouter>
       </div>
-    </div>
+    </ApolloProvider>
   );
 }
 
