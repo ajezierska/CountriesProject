@@ -28,7 +28,14 @@ const GET_LIST_COUNTRIES_FROM_CONTINENT = gql`
 interface ICountriesListProps {}
 
 const CountriesList: React.FC<ICountriesListProps> = (props) => {
-  const [value, setValue] = useState("");
+  const [filter, setfilter] = useState<{ value: string; label: string }>({
+    value: "all",
+    label: "Filter by continents...",
+  });
+  const [search, setSearch] = useState<string>("");
+  const [countriesList, setCountriesList] = useState([]);
+  const inputEl = React.useRef<HTMLInputElement | null>(null);
+
   const {
     loading: countriesLoading,
     error: countriesError,
@@ -40,44 +47,65 @@ const CountriesList: React.FC<ICountriesListProps> = (props) => {
     error: filterError,
     data: filterData,
   } = useQuery(GET_LIST_COUNTRIES_FROM_CONTINENT, {
-    variables: { code: value },
+    variables: { code: filter.value },
   });
 
-  const [countriesList, setCountriesList] = useState(countriesData);
 
   useEffect(() => {
-    if (countriesData) {
-      setCountriesList(countriesData);
+    if (filter.value === "all" && countriesData) {
+      setCountriesList(countriesData.countries);
+    } else if (filterData && filterData.continent) {
+      setCountriesList(filterData.continent.countries);
     }
-  }, [countriesData]);
+  }, [filterData, countriesData, filter, search]);
 
   useEffect(() => {
-    if (!value) return;
-    if (filterData) {
-      setCountriesList(filterData.continent);
+    if (search) {
+      const newfilterData =
+        !filterData || filterData.continent === null
+          ? []
+          : filterData.continent.countries;
+      const countries =
+        filter.value === "all" ? countriesData.countries : newfilterData;
+      const newCountriesList = countries.filter((country: any) => {
+        return Object.values(country.name)
+          .join("")
+          .toLowerCase()
+          .includes(search.toLowerCase());
+      });
+      setCountriesList(newCountriesList);
     }
-  }, [filterData]);
+  }, [search, filter, filterData, countriesData]);
 
   if (countriesLoading || filterLoading) return <p>Loading...</p>;
   if (countriesError || filterError) return <p>Error...</p>;
 
   const handleFilter = (e: any) => {
-    setValue(e.value);
+    setfilter(e);
+  };
+
+  const handleSearchTerm = () => {
+    setSearch((inputEl.current as HTMLInputElement).value);
   };
 
   return (
     <>
       <p>CountriesList</p>
-      <Filter handleFilter={handleFilter} />
+      <Filter handleFilter={handleFilter} filterValue={filter} />
+      <input
+        ref={inputEl}
+        type="text"
+        placeholder="Search Contacts"
+        value={search}
+        onChange={handleSearchTerm}
+      />
       {countriesList &&
-        countriesList.countries.map(
-          (country: { name: string; code: string }) => (
-            <Link to={`/${country.code}`} key={country.name}>
-              <p>{country.name}</p>
-              <p>{country.code}</p>
-            </Link>
-          )
-        )}
+        countriesList.map((country: { name: string; code: string }) => (
+          <Link to={`/${country.code}`} key={country.name}>
+            <p>{country.name}</p>
+            <p>{country.code}</p>
+          </Link>
+        ))}
     </>
   );
 };
