@@ -1,5 +1,4 @@
 import React from "react";
-import "./App.css";
 import CountriesList from "./components/CountriesList";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import CountryDetail from "./components/CountryDetail";

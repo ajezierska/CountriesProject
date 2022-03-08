@@ -3,6 +3,7 @@ import { gql } from "apollo-boost";
 import { useQuery } from "@apollo/react-hooks";
 import { Link } from "react-router-dom";
 import Filter from "./Filter";
+import Header from "./Header";
 
 const GET_COUNTRIES_LIST = gql`
   {
@@ -25,15 +26,13 @@ const GET_LIST_COUNTRIES_FROM_CONTINENT = gql`
   }
 `;
 
-interface ICountriesListProps {}
-
-const CountriesList: React.FC<ICountriesListProps> = (props) => {
+const CountriesList: React.FC = () => {
   const [filter, setfilter] = useState<{ value: string; label: string }>({
     value: "all",
     label: "Filter by continents...",
   });
   const [search, setSearch] = useState<string>("");
-  const [countriesList, setCountriesList] = useState([]);
+  const [countriesList, setCountriesList] = useState<[]>([]);
   const inputEl = React.useRef<HTMLInputElement | null>(null);
 
   const {
@@ -49,7 +48,6 @@ const CountriesList: React.FC<ICountriesListProps> = (props) => {
   } = useQuery(GET_LIST_COUNTRIES_FROM_CONTINENT, {
     variables: { code: filter.value },
   });
-
 
   useEffect(() => {
     if (filter.value === "all" && countriesData) {
@@ -77,9 +75,6 @@ const CountriesList: React.FC<ICountriesListProps> = (props) => {
     }
   }, [search, filter, filterData, countriesData]);
 
-  if (countriesLoading || filterLoading) return <p>Loading...</p>;
-  if (countriesError || filterError) return <p>Error...</p>;
-
   const handleFilter = (e: any) => {
     setfilter(e);
   };
@@ -90,22 +85,38 @@ const CountriesList: React.FC<ICountriesListProps> = (props) => {
 
   return (
     <>
-      <p>CountriesList</p>
-      <Filter handleFilter={handleFilter} filterValue={filter} />
-      <input
-        ref={inputEl}
-        type="text"
-        placeholder="Search Contacts"
-        value={search}
-        onChange={handleSearchTerm}
-      />
-      {countriesList &&
-        countriesList.map((country: { name: string; code: string }) => (
-          <Link to={`/${country.code}`} key={country.name}>
-            <p>{country.name}</p>
-            <p>{country.code}</p>
-          </Link>
-        ))}
+      <Header title="Countries List" />
+      <div className="container mx-auto max-w-2xl">
+        <div className="flex flex-row justify-between mb-2">
+          <Filter handleFilter={handleFilter} filterValue={filter} />
+          <input
+            ref={inputEl}
+            type="text"
+            placeholder="Search Countries..."
+            value={search}
+            onChange={handleSearchTerm}
+            className="ml-2 w-7/12 border-2 border-slate-300 border-solid rounded px-3 text-black focus:outline-none focus:border-sky-600 placeholder:text-black"
+          />
+        </div>
+        {countriesError ||
+          (filterError && <p className="pl-2 text-slate-500">Error...</p>)}
+        {countriesList && countriesList.length ? (
+          countriesList.map((country: { name: string; code: string }) => (
+            <Link
+              to={`/${country.code}`}
+              key={country.name}
+              className="flex flex-row"
+            >
+              <p className="mr-3 text-cyan-600">{country.name}</p>
+              <p>{country.code}</p>
+            </Link>
+          ))
+        ) : (
+          <p className="pl-2 text-slate-500">
+            {countriesLoading || filterLoading ? "Loading..." : "no results..."}
+          </p>
+        )}
+      </div>
     </>
   );
 };
